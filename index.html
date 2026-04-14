@@ -1666,82 +1666,16 @@
         </div>
     </footer>
 
-    <script>
-        // Base de datos de bicicletas (simulada)
-        let bikesDB = [
-            {
-                id: 1,
-                customer: "Carlos González",
-                model: "Mountain Bike Pro",
-                status: "reparacion",
-                notes: "Cambio de frenos y ajuste de cambios",
-                photo: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-                timeline: [
-                    {
-                        date: "15 Oct 2023",
-                        description: "Diagnóstico completado: necesita cambio de frenos y ajuste de cambios"
-                    },
-                    {
-                        date: "16 Oct 2023",
-                        description: "Frenos nuevos instalados"
-                    }
-                ],
-                stages: [
-                    {
-                        id: 1,
-                        name: "Desarme completo",
-                        photo: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-                        date: "15 Oct 2023"
-                    },
-                    {
-                        id: 2,
-                        name: "Engrase de componentes",
-                        photo: "https://images.unsplash.com/photo-1611652022419-9ec0d5f3d19b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-                        date: "16 Oct 2023"
-                    }
-                ],
-                trackingCode: "BICI-12345",
-                rating: null
-            },
-            {
-                id: 2,
-                customer: "María Fernández",
-                model: "Bicicleta de Ruta",
-                status: "listo",
-                notes: "Revisión completa y cambio de neumáticos",
-                photo: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-                timeline: [
-                    {
-                        date: "10 Oct 2023",
-                        description: "Diagnóstico completado: necesita cambio de neumáticos y ajuste de frenos"
-                    },
-                    {
-                        date: "12 Oct 2023",
-                        description: "Cambio de neumáticos completado"
-                    }
-                ],
-                stages: [
-                    {
-                        id: 1,
-                        name: "Revisión inicial",
-                        photo: "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-                        date: "10 Oct 2023"
-                    },
-                    {
-                        id: 2,
-                        name: "Cambio de neumáticos",
-                        photo: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-                        date: "12 Oct 2023"
-                    }
-                ],
-                trackingCode: "BICI-67890",
-                rating: {
-                    stars: 4.5,
-                    comment: "Excelente servicio, muy profesional"
-                }
-            }
-        ];
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+    <script>
+        // 1. Inicializar conexión a tu Supabase
+        const supabaseUrl = 'https://pmdvlqatzyqqzrqezucr.supabase.co';
+        const supabaseKey = 'sb_publishable_otdbGGMA7xg622ylyUALHg_uKZIpSxc';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 2. Base de datos de bicicletas (ahora vacía porque vendrán de internet)
+        let bikesDB = [];
         // Base de datos de servicios
         let servicesDB = [
             {
@@ -2016,7 +1950,7 @@
             });
             
             // Agregar nueva bicicleta
-            document.getElementById('addBikeBtn').addEventListener('click', function() {
+            document.getElementById('addBikeBtn').addEventListener('click', async function() {
                 const customer = document.getElementById('customerName').value;
                 const model = document.getElementById('bikeModel').value;
                 const problem = document.getElementById('problemDescription').value;
@@ -2031,35 +1965,47 @@
                 // Generar código de seguimiento único
                 const trackingCode = 'BICI-' + Math.random().toString(36).substr(2, 6).toUpperCase();
                 
-                const newBike = {
-                    id: Date.now(),
-                    customer: customer,
-                    model: model,
-                    status: status,
-                    notes: problem,
-                    photo: photo || 'https://via.placeholder.com/300x200?text=BICIPIOLA',
-                    timeline: [{
-                        date: new Date().toLocaleDateString('es-ES'),
-                        description: "Bicicleta recibida para diagnóstico"
-                    }],
-                    stages: [],
-                    trackingCode: trackingCode,
-                    rating: null
-                };
-                
-                bikesDB.push(newBike);
-                renderBikes();
-                updateBikeSelect();
-                updateStats();
-                
-                // Limpiar formulario
-                document.getElementById('customerName').value = '';
-                document.getElementById('bikeModel').value = '';
-                document.getElementById('problemDescription').value = '';
-                document.getElementById('bikePhotoPreview').innerHTML = '';
-                document.getElementById('bikePhotoUrl').value = '';
-                
-                showNotification('Nueva bicicleta agregada con código: ' + trackingCode);
+                // Cambiar el texto del botón mientras guarda
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Guardando en la nube...';
+                btn.disabled = true;
+
+                try {
+                    // Magia de Supabase: Insertar los datos en tu tabla 'bicicletas'
+                    const { error } = await window.supabase
+                        .from('bicicletas')
+                        .insert([
+                            { 
+                                cliente: customer, 
+                                modelo: model, 
+                                estado: status, 
+                                notas: problem, 
+                                foto_url: photo || 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=500&q=60',
+                                codigo_seguimiento: trackingCode
+                            }
+                        ]);
+
+                    // Si hay un error, lo lanzamos para que lo atrape el catch
+                    if (error) throw error;
+
+                    // Limpiar formulario si todo salió bien
+                    document.getElementById('customerName').value = '';
+                    document.getElementById('bikeModel').value = '';
+                    document.getElementById('problemDescription').value = '';
+                    document.getElementById('bikePhotoPreview').innerHTML = '';
+                    document.getElementById('bikePhotoUrl').value = '';
+                    
+                    showNotification('Nueva bicicleta guardada con éxito en Supabase');
+                    
+                } catch (error) {
+                    console.error("Error Supabase:", error);
+                    showNotification('Error al guardar en la base de datos', true);
+                } finally {
+                    // Restaurar botón a su estado normal
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             });
             
             // Guardar cambios en servicio
