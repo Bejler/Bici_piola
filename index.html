@@ -1675,6 +1675,38 @@
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         // 2. Base de datos de bicicletas (ahora vacía porque vendrán de internet)
         let bikesDB = [];
+        // 3. Función para descargar las bicicletas de Supabase y mostrarlas
+        async function fetchBikes() {
+            try {
+                // Pedimos todas las bicicletas a Supabase
+                const { data, error } = await supabaseClient.from('bicicletas').select('*');
+                
+                if (error) throw error;
+
+                if (data) {
+                    // Traducimos los datos de Supabase al formato que entiende tu página visual
+                    bikesDB = data.map(bici => ({
+                        id: bici.id,
+                        customer: bici.cliente,
+                        model: bici.modelo,
+                        status: bici.estado,
+                        notes: bici.notas,
+                        photo: bici.foto_url,
+                        trackingCode: bici.codigo_seguimiento,
+                        timeline: [{ date: "Ingreso", description: "Bicicleta recibida en el taller" }],
+                        stages: [],
+                        rating: null
+                    }));
+
+                    // Le decimos a la página que vuelva a dibujar todo con los datos nuevos
+                    renderBikes();
+                    updateBikeSelect();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error("Error descargando bicis:", error);
+            }
+        }
         // Base de datos de servicios
         let servicesDB = [
             {
@@ -1748,6 +1780,7 @@
 
         // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', function() {
+            fetchBikes();
             initAnimations();
             setupEventListeners();
             setupDragAndDrop();
