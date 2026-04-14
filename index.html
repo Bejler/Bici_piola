@@ -1672,8 +1672,7 @@
         // 1. Inicializar conexión a tu Supabase
         const supabaseUrl = 'https://pmdvlqatzyqqzrqezucr.supabase.co';
         const supabaseKey = 'sb_publishable_otdbGGMA7xg622ylyUALHg_uKZIpSxc';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         // 2. Base de datos de bicicletas (ahora vacía porque vendrán de internet)
         let bikesDB = [];
         // Base de datos de servicios
@@ -1973,8 +1972,8 @@
 
                 try {
                     // Magia de Supabase: Insertar los datos en tu tabla 'bicicletas'
-                    const { error } = await window.supabase
-                        .from('bicicletas')
+                    const { error } = await supabaseClient
+                         .from('bicicletas')
                         .insert([
                             { 
                                 cliente: customer, 
